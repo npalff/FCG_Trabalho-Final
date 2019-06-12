@@ -81,7 +81,7 @@ void main()
 
     vec3 Kd;  // Refletância difusa
     vec3 Ks = vec3(0.0f, 0.0f, 0.0f); // Refletância especular
-    float q;  // Expoente especular para o modelo de iluminação de Phong
+    float q = 1;  // Expoente especular para o modelo de iluminação de Phong
 
     if ( object_id == SPHERE )
     {
@@ -170,7 +170,7 @@ void main()
     {
         Kd = vec3(1.0, 0.843, 0.0);
         Ks = vec3(0.8,0.8,0.8);
-        q = 50;
+        q = 10;
     }
 
     // Equação de Iluminação
