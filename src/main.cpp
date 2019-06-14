@@ -113,6 +113,7 @@ void TextRendering_ShowModelViewProjection(GLFWwindow* window, glm::mat4 project
 void TextRendering_ShowEulerAngles(GLFWwindow* window);
 void TextRendering_ShowProjection(GLFWwindow* window);
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
+void TextRendering_ShowTime(GLFWwindow* window);
 
 // Funções callback para comunicação com o sistema operacional e interação do
 // usuário. Veja mais comentários nas definições das mesmas, abaixo.
@@ -341,6 +342,19 @@ int main(int argc, char* argv[])
     float deltaT;                 // t_now - t_prev
 
 
+    // Variáveis que definem as esferas dos checkpoints em cada curva
+    std::vector<glm::vec4> checkpointsCenter;
+    checkpointsCenter.push_back(glm::vec4(-8.0f, 0.0f, 1.1f, 1.0f));
+    checkpointsCenter.push_back(glm::vec4(-1.0f, 0.0f, -1.0f, 1.0f));
+    checkpointsCenter.push_back(glm::vec4(2.0f, 0.0f, -4.7f, 1.0f));
+    checkpointsCenter.push_back(glm::vec4(7.6f, 0.0f, -0.8f, 1.0f));
+    checkpointsCenter.push_back(glm::vec4(1.35f, 0.0f, -1.34f, 1.0f));
+    checkpointsCenter.push_back(glm::vec4(6.3f, 0.0f, 2.7f, 1.0f));
+    float checkpointsRaio = 1;
+    //Indice que controla se o carrinho passou pelos checkpoints. (Ex: se for 0, não passou por nenhum; se for 2, passou pelo 1 e 2.
+    int ci = 0; // Indice pro array
+
+
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -460,15 +474,12 @@ int main(int argc, char* argv[])
         #define TROFEU 6
 
 //        // Desenhamos o modelo da esfera
-//        model = Matrix_Translate(-1.0f,0.0f,0.0f)
-//              * Matrix_Rotate_Z(0.6f)
-//              * Matrix_Rotate_X(0.2f)
-//              * Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.1f);
+//        model = Matrix_Translate(cameraX,cameraY,cameraZ);
 //        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
 //        glUniform1i(object_id_uniform, SPHERE);
 //        DrawVirtualObject("sphere");
 
-        // Desenhamos a TREE
+        // Desenhamos as TREE
         std::vector<glm::mat4> treeModels;
         for(float x = -8; x <= 7; x = x+1.5) {   // de x=-8 até 7, de 1.5 em 1.5
             model = Matrix_Translate(x,0.0f,7.0f);
@@ -486,7 +497,7 @@ int main(int argc, char* argv[])
             DrawVirtualObject("tree");
         }
 
-        // Desenhamos O PNEU
+        // Desenhamos os PNEU
         std::vector<glm::mat4> tireModels;
         tireModels.push_back(Matrix_Translate(3.0f, -0.32f, -10.6f));
         tireModels.push_back(Matrix_Translate(3.0f, -0.22f, -10.6f));
@@ -521,6 +532,27 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, TRUCK);
         DrawVirtualObject("truck");
 
+
+
+        //Detecção de intersecção com os checkpoints
+        glm::vec3 bbox_min = g_VirtualScene["truck"].bbox_min;
+        glm::vec3 bbox_max = g_VirtualScene["truck"].bbox_max;
+        glm::vec4 bbox_minH = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
+        glm::vec4 bbox_maxH = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
+
+        bbox_minH = model * bbox_minH;
+        bbox_maxH = model * bbox_maxH;
+        //printf("(%.2f , %.2f, %.2f) (%.2f , %.2f, %.2f)\n", bbox_minH.x, bbox_minH.y, bbox_minH.z, bbox_maxH.x, bbox_maxH.y, bbox_maxH.z);
+        glm::vec4 bbox_center = (bbox_minH + bbox_maxH);
+        bbox_center.x = bbox_center.x * 0.5f; bbox_center.y = bbox_center.y * 0.5f; bbox_center.z = bbox_center.z * 0.5f; bbox_center.w = 1.0f;
+
+        float distance_to_next_checkpoint = norm(checkpointsCenter[ci] - bbox_center);
+        if(distance_to_next_checkpoint <= checkpointsRaio)
+        {
+            ci++;
+        }
+        printf("%d", ci);
+
         // Desenhamos o plano do chão
         model = Matrix_Scale(10.0f,1.0f,10.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -541,9 +573,12 @@ int main(int argc, char* argv[])
         //glm::vec4 p_model(0.5f, 0.5f, 0.5f, 1.0f);
         //TextRendering_ShowModelViewProjection(window, projection, view, model, p_model);
 
+        // Imprimimos na tela o tempo decorrido
+        TextRendering_ShowTime(window);
+
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
-        TextRendering_ShowEulerAngles(window);
+        //TextRendering_ShowEulerAngles(window);
 
         // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
         TextRendering_ShowProjection(window);
@@ -1378,6 +1413,24 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 void ErrorCallback(int error, const char* description)
 {
     fprintf(stderr, "ERROR: GLFW: %s\n", description);
+}
+
+void TextRendering_ShowTime(GLFWwindow* window)
+{
+    if ( !g_ShowInfoText )
+        return;
+
+    int time = glfwGetTime();
+
+    int minutos = time/60;
+    int segundos = time % 60;
+
+    float lineheight = TextRendering_LineHeight(window);
+
+    char buffer[30];
+    snprintf(buffer, 30, "%02d:%02d\n", minutos, segundos);
+
+    TextRendering_PrintString(window, buffer, -0.2f+lineheight, 0.8f+lineheight, 3.0f);
 }
 
 // Esta função recebe um vértice com coordenadas de modelo p_model e passa o
