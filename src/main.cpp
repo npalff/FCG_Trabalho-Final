@@ -114,6 +114,7 @@ void TextRendering_ShowEulerAngles(GLFWwindow* window);
 void TextRendering_ShowProjection(GLFWwindow* window);
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
 void TextRendering_ShowTime(GLFWwindow* window);
+void TextRendering_ShowCheckpoint(GLFWwindow* window, int checkpoint);
 
 // Funções callback para comunicação com o sistema operacional e interação do
 // usuário. Veja mais comentários nas definições das mesmas, abaixo.
@@ -542,16 +543,19 @@ int main(int argc, char* argv[])
 
         bbox_minH = model * bbox_minH;
         bbox_maxH = model * bbox_maxH;
-        //printf("(%.2f , %.2f, %.2f) (%.2f , %.2f, %.2f)\n", bbox_minH.x, bbox_minH.y, bbox_minH.z, bbox_maxH.x, bbox_maxH.y, bbox_maxH.z);
         glm::vec4 bbox_center = (bbox_minH + bbox_maxH);
         bbox_center.x = bbox_center.x * 0.5f; bbox_center.y = bbox_center.y * 0.5f; bbox_center.z = bbox_center.z * 0.5f; bbox_center.w = 1.0f;
 
-        float distance_to_next_checkpoint = norm(checkpointsCenter[ci] - bbox_center);
-        if(distance_to_next_checkpoint <= checkpointsRaio)
+        printf("%.2f\n", bbox_maxH.x);
+
+        if(ci < 6)
         {
-            ci++;
+            float distance_to_next_checkpoint = norm(checkpointsCenter[ci] - bbox_center);
+            if(distance_to_next_checkpoint <= checkpointsRaio)
+            {
+                ci++;
+            }
         }
-        printf("%d", ci);
 
         // Desenhamos o plano do chão
         model = Matrix_Scale(10.0f,1.0f,10.0f);
@@ -575,6 +579,9 @@ int main(int argc, char* argv[])
 
         // Imprimimos na tela o tempo decorrido
         TextRendering_ShowTime(window);
+
+        // Imprimimos na tela o checkpoint atual
+        TextRendering_ShowCheckpoint(window, ci);
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -1431,6 +1438,20 @@ void TextRendering_ShowTime(GLFWwindow* window)
     snprintf(buffer, 30, "%02d:%02d\n", minutos, segundos);
 
     TextRendering_PrintString(window, buffer, -0.2f+lineheight, 0.8f+lineheight, 3.0f);
+}
+
+// Escrevemos na tela o checkpoint
+void TextRendering_ShowCheckpoint(GLFWwindow* window, int checkpoint)
+{
+    if ( !g_ShowInfoText )
+        return;
+
+    float pad = TextRendering_LineHeight(window);
+
+    char buffer[30];
+    snprintf(buffer, 30, "Checkpoint: %d\n", checkpoint);
+
+    TextRendering_PrintString(window, buffer, -1.0f+pad/10, -1.0f+2*pad/10, 1.0f);
 }
 
 // Esta função recebe um vértice com coordenadas de modelo p_model e passa o
