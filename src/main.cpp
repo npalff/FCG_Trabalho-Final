@@ -125,6 +125,11 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
+// Declaração de funções usadas nos cálculos de intersecção
+bool between(float num, float extremo1, float extremo2);
+bool bbContainsPoint(glm::vec3 bb1, glm::vec3 bb2, glm::vec3 point);
+bool bbInterseccao(glm::vec4 bb1_min, glm::vec4 bb1_max, glm::vec4 bb2_min, glm::vec4 bb2_max);
+
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
 struct SceneObject
@@ -564,8 +569,7 @@ int main(int argc, char* argv[])
         }
         else    // Linha de chegada
         {
-            if(((bbox_maxH.x > chegadaX && bbox_minH.x < chegadaX) || (bbox_maxH.x < chegadaX && bbox_minH.x > chegadaX))
-            && (bbox_maxH.z > chegadaZ[0] && bbox_minH.z > chegadaZ[0] && bbox_maxH.z < chegadaZ[1] && bbox_minH.z < chegadaZ[1]))
+            if(between(chegadaX, bbox_maxH.x, bbox_minH.x) && between(bbox_maxH.z, chegadaZ[0], chegadaZ[1]) && between(bbox_minH.z, chegadaZ[0], chegadaZ[1]))
             {
                 finished = true;
             }
@@ -628,6 +632,33 @@ int main(int argc, char* argv[])
 
     // Fim do programa
     return 0;
+}
+
+// Verifica se um número está entre outros dois números
+bool between(float num, float extremo1, float extremo2)
+{
+    float menor = std::min(extremo1, extremo2);
+    float maior = std::max(extremo1, extremo2);
+    return (num <= maior && num >= menor);
+}
+
+// Dado uma bounding box e um ponto, verifica se o ponto está contido na bounding box
+bool bbContainsPoint(glm::vec3 bb1, glm::vec3 bb2, glm::vec3 point)
+{
+    return (between(point.x, bb1.x, bb2.x) && between(point.y, bb1.y, bb2.y) && between(point.z, bb1.z, bb2.z));
+}
+
+// Dado duas bounding boxes, verifica se há intersecção entre elas
+bool bbInterseccao(glm::vec4 bb1_min, glm::vec4 bb1_max, glm::vec4 bb2_min, glm::vec4 bb2_max)
+{
+    return (bbContainsPoint(bb1_min, bb1_max, glm::vec3(bb2_min.x, bb2_min.y, bb2_min.z)) ||
+            bbContainsPoint(bb1_min, bb1_max, glm::vec3(bb2_max.x, bb2_min.y, bb2_min.z)) ||
+            bbContainsPoint(bb1_min, bb1_max, glm::vec3(bb2_min.x, bb2_max.y, bb2_min.z)) ||
+            bbContainsPoint(bb1_min, bb1_max, glm::vec3(bb2_max.x, bb2_max.y, bb2_min.z)) ||
+            bbContainsPoint(bb1_min, bb1_max, glm::vec3(bb2_min.x, bb2_min.y, bb2_max.z)) ||
+            bbContainsPoint(bb1_min, bb1_max, glm::vec3(bb2_max.x, bb2_min.y, bb2_max.z)) ||
+            bbContainsPoint(bb1_min, bb1_max, glm::vec3(bb2_min.x, bb2_max.y, bb2_max.z)) ||
+            bbContainsPoint(bb1_min, bb1_max, glm::vec3(bb2_max.x, bb2_max.y, bb2_max.z)) );
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
