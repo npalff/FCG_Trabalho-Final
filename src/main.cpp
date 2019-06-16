@@ -213,8 +213,8 @@ GLuint g_NumLoadedTextures = 0;
 // Variável usada para marcar o tempo da corrida
 int lapTime = 0;
 int initialTime;     // Marca o tempo decorrido desde o início da execução até o primeiro movimento do carro
-int firstW = 0;      // Indica se w foi apertado alguma vez
-int finished = 0;    // Indica se o carro cruzou a linha de chegada (parar a contagem do tempo)
+bool firstW = false;      // Indica se w foi apertado alguma vez
+bool finished = false;    // Indica se o carro cruzou a linha de chegada (parar a contagem do tempo)
 
 int main(int argc, char* argv[])
 {
@@ -567,7 +567,7 @@ int main(int argc, char* argv[])
             if(((bbox_maxH.x > chegadaX && bbox_minH.x < chegadaX) || (bbox_maxH.x < chegadaX && bbox_minH.x > chegadaX))
             && (bbox_maxH.z > chegadaZ[0] && bbox_minH.z > chegadaZ[0] && bbox_maxH.z < chegadaZ[1] && bbox_minH.z < chegadaZ[1]))
             {
-                finished = 1;
+                finished = true;
             }
         }
 
@@ -1356,7 +1356,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
         if(!firstW){
             initialTime = glfwGetTime();
-            firstW = 1;
+            firstW = true;
         }
     }
     if(key == GLFW_KEY_S)
