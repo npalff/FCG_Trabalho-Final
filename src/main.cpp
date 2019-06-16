@@ -210,6 +210,12 @@ GLint object_mlt;
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 
+// Variável usada para marcar o tempo da corrida
+int lapTime = 0;
+int initialTime;     // Marca o tempo decorrido desde o início da execução até o primeiro movimento do carro
+int firstW = 0;      // Indica se w foi apertado alguma vez
+int finished = 0;    // Indica se o carro cruzou a linha de chegada (parar a contagem do tempo)
+
 int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
@@ -342,7 +348,6 @@ int main(int argc, char* argv[])
     float t_now = 0;              // decorrido até o momento
     float deltaT;                 // t_now - t_prev
 
-
     // Variáveis que definem as esferas dos checkpoints em cada curva
     std::vector<glm::vec4> checkpointsCenter;
     checkpointsCenter.push_back(glm::vec4(-8.0f, 0.0f, 1.1f, 1.0f));
@@ -354,6 +359,10 @@ int main(int argc, char* argv[])
     float checkpointsRaio = 1;
     //Indice que controla se o carrinho passou pelos checkpoints. (Ex: se for 0, não passou por nenhum; se for 2, passou pelo 1 e 2.
     int ci = 0; // Indice pro array
+
+    // Variáveis que definem o plano da linha de chegada
+    float chegadaX = 0.44;
+    float chegadaZ[2] = {2.6, 4.2};
 
 
     // Ficamos em loop, renderizando, até que o usuário feche a janela
@@ -534,7 +543,6 @@ int main(int argc, char* argv[])
         DrawVirtualObject("truck");
 
 
-
         //Detecção de intersecção com os checkpoints
         glm::vec3 bbox_min = g_VirtualScene["truck"].bbox_min;
         glm::vec3 bbox_max = g_VirtualScene["truck"].bbox_max;
@@ -546,14 +554,20 @@ int main(int argc, char* argv[])
         glm::vec4 bbox_center = (bbox_minH + bbox_maxH);
         bbox_center.x = bbox_center.x * 0.5f; bbox_center.y = bbox_center.y * 0.5f; bbox_center.z = bbox_center.z * 0.5f; bbox_center.w = 1.0f;
 
-        printf("%.2f\n", bbox_maxH.x);
-
         if(ci < 6)
         {
             float distance_to_next_checkpoint = norm(checkpointsCenter[ci] - bbox_center);
             if(distance_to_next_checkpoint <= checkpointsRaio)
             {
                 ci++;
+            }
+        }
+        else    // Linha de chegada
+        {
+            if(((bbox_maxH.x > chegadaX && bbox_minH.x < chegadaX) || (bbox_maxH.x < chegadaX && bbox_minH.x > chegadaX))
+            && (bbox_maxH.z > chegadaZ[0] && bbox_minH.z > chegadaZ[0] && bbox_maxH.z < chegadaZ[1] && bbox_minH.z < chegadaZ[1]))
+            {
+                finished = 1;
             }
         }
 
@@ -1339,6 +1353,11 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if(key == GLFW_KEY_W)
     {
         pressedW = (!action == GLFW_RELEASE);
+
+        if(!firstW){
+            initialTime = glfwGetTime();
+            firstW = 1;
+        }
     }
     if(key == GLFW_KEY_S)
     {
@@ -1427,10 +1446,13 @@ void TextRendering_ShowTime(GLFWwindow* window)
     if ( !g_ShowInfoText )
         return;
 
-    int time = glfwGetTime();
+    if(firstW && !finished)
+    {
+        lapTime = glfwGetTime() - initialTime;
+    }
 
-    int minutos = time/60;
-    int segundos = time % 60;
+    int minutos = lapTime/60;
+    int segundos = lapTime % 60;
 
     float lineheight = TextRendering_LineHeight(window);
 
