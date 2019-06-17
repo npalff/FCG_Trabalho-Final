@@ -49,6 +49,8 @@
 #include "matrices.h"
 
 #define M_PI 3.14159265358979323846
+#define MINIMUM_SPEED 0.5
+#define MAXIMUM_SPEED 3.7
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -225,6 +227,7 @@ int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
     // sistema operacional, onde poderemos renderizar com OpenGL.
+    float speed=0;
     int success = glfwInit();
     if (!success)
     {
@@ -408,10 +411,23 @@ int main(int argc, char* argv[])
         // Código para implementar free camera:
         if(pressedW)
         {
-            cameraX -= deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
-            cameraY -= deltaT * sin(g_CameraPhi);
-            cameraZ -= deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
+            if (speed<1.4)
+                speed += 0.03;
+            else if (speed<= MAXIMUM_SPEED)
+                speed +=0.001;
         }
+        if(!pressedW)
+        {
+            if (speed > 2)
+                speed -= 0.008;
+            else if(speed>0)
+                speed -= 0.0035;
+            if(speed<0)
+                speed=0;
+        }
+            cameraX -= speed * deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
+            cameraY -= speed * deltaT * sin(g_CameraPhi);
+            cameraZ -= speed * deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
         if(pressedS)
         {
             cameraX += deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
@@ -420,11 +436,11 @@ int main(int argc, char* argv[])
         }
         if(pressedA)
         {
-            g_CameraTheta += deltaT;
+            g_CameraTheta += 1.5*deltaT;
         }
         if(pressedD)
         {
-            g_CameraTheta -= deltaT;
+            g_CameraTheta -= 1.5*deltaT;
         }
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
