@@ -587,6 +587,18 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, TROFEU);
         DrawVirtualObject("trofeu");
 
+        glm::vec3 t_bbox_min = g_VirtualScene["trofeu"].bbox_min;
+        glm::vec3 t_bbox_max = g_VirtualScene["trofeu"].bbox_max;
+        glm::vec4 t_bbox_minH = glm::vec4(t_bbox_min.x, t_bbox_min.y, t_bbox_min.z, 1.0f);
+        glm::vec4 t_bbox_maxH = glm::vec4(t_bbox_max.x, t_bbox_max.y, t_bbox_max.z, 1.0f);
+
+        t_bbox_minH = model * t_bbox_minH;
+        t_bbox_maxH = model * t_bbox_maxH;
+
+        if(bbInterseccao(bbox_minH, bbox_maxH, t_bbox_minH, t_bbox_maxH))
+        {
+            printf("BATEU!");
+        }
 
         // Pegamos um vértice com coordenadas de modelo (0.5, 0.5, 0.5, 1) e o
         // passamos por todos os sistemas de coordenadas armazenados nas
@@ -643,7 +655,7 @@ bool between(float num, float extremo1, float extremo2)
 }
 
 // Dado uma bounding box e um ponto, verifica se o ponto está contido na bounding box
-bool bbContainsPoint(glm::vec3 bb1, glm::vec3 bb2, glm::vec3 point)
+bool bbContainsPoint(glm::vec4 bb1, glm::vec4 bb2, glm::vec3 point)
 {
     return (between(point.x, bb1.x, bb2.x) && between(point.y, bb1.y, bb2.y) && between(point.z, bb1.z, bb2.z));
 }
