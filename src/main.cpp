@@ -373,6 +373,36 @@ int main(int argc, char* argv[])
     float chegadaZ[2] = {2.6, 4.2};
 
 
+    /* DEFINIÇÃO DAS MATRIZES MODEL DOS OBJETOS ESTÁTICOS QUE PODEM COLIDIR COM O CARRO */
+
+    // ARVORES
+    std::vector<glm::mat4> treeModels;
+    for(float x = -8; x <= 7; x = x+1.5)  // de x=-8 até 7, de 1.5 em 1.5
+    {
+        glm::mat4 model = Matrix_Translate(x,0.0f,7.0f);
+        treeModels.push_back(model);
+    }
+    treeModels.push_back(Matrix_Translate(8.2f,0.0f,2.8f));
+    treeModels.push_back(Matrix_Translate(-3.0f,0.0f,-3.8f));
+    treeModels.push_back(Matrix_Translate(-2.8f,0.0f,-4.5f));
+    treeModels.push_back(Matrix_Translate(-2.5f,0.0f,-4.3f));
+
+    // PNEUS
+    std::vector<glm::mat4> tireModels;
+    tireModels.push_back(Matrix_Translate(3.0f, -0.32f, -10.6f));
+    tireModels.push_back(Matrix_Translate(3.0f, -0.22f, -10.6f));
+    tireModels.push_back(Matrix_Translate(3.0f, -0.12f, -10.6f));
+    tireModels.push_back(Matrix_Translate(2.77f, -0.32f, -10.7f));
+    tireModels.push_back(Matrix_Translate(2.77f, -0.22f, -10.7f));
+    tireModels.push_back(Matrix_Translate(2.77f, -0.12f, -10.7f));
+    tireModels.push_back(Matrix_Translate(2.54f, -0.32f, -10.8f));
+    tireModels.push_back(Matrix_Translate(2.54f, -0.22f, -10.8f));
+    tireModels.push_back(Matrix_Translate(2.54f, -0.12f, -10.8f));
+
+    // TROFEU
+    glm::mat4 trofeuModel = Matrix_Translate(0.0f, -3.55f, 1.0f);
+
+
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -411,19 +441,19 @@ int main(int argc, char* argv[])
         // Código para implementar free camera:
         if(pressedW)
         {
-            if (speed<1.4)
+            if (speed < 1.4)
                 speed += 0.03;
-            else if (speed<= MAXIMUM_SPEED)
-                speed +=0.001;
+            else if (speed <= MAXIMUM_SPEED)
+                speed += 0.001;
         }
         if(!pressedW)
         {
             if (speed > 2)
                 speed -= 0.008;
-            else if(speed>0)
+            else if(speed > 0)
                 speed -= 0.0035;
-            if(speed<0)
-                speed=0;
+            if(speed < 0)
+                speed = 0;
         }
             cameraX -= speed * deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
             cameraY -= speed * deltaT * sin(g_CameraPhi);
@@ -504,23 +534,7 @@ int main(int argc, char* argv[])
         #define TIRE2  5
         #define TROFEU 6
 
-//        // Desenhamos o modelo da esfera
-//        model = Matrix_Translate(cameraX,cameraY,cameraZ);
-//        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-//        glUniform1i(object_id_uniform, SPHERE);
-//        DrawVirtualObject("sphere");
-
-        // Desenhamos as TREE
-        std::vector<glm::mat4> treeModels;
-        for(float x = -8; x <= 7; x = x+1.5) {   // de x=-8 até 7, de 1.5 em 1.5
-            model = Matrix_Translate(x,0.0f,7.0f);
-            treeModels.push_back(model);
-        }
-        treeModels.push_back(Matrix_Translate(8.2f,0.0f,2.8f));
-        treeModels.push_back(Matrix_Translate(-3.0f,0.0f,-3.8f));
-        treeModels.push_back(Matrix_Translate(-2.8f,0.0f,-4.5f));
-        treeModels.push_back(Matrix_Translate(-2.5f,0.0f,-4.3f));
-
+        // Desenhamos as ARVORES
         for(int i = 0; i < treeModels.size(); i++) {
             model = treeModels[i];
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -528,25 +542,13 @@ int main(int argc, char* argv[])
             DrawVirtualObject("tree");
         }
 
-        // Desenhamos os PNEU
-        std::vector<glm::mat4> tireModels;
-        tireModels.push_back(Matrix_Translate(3.0f, -0.32f, -10.6f));
-        tireModels.push_back(Matrix_Translate(3.0f, -0.22f, -10.6f));
-        tireModels.push_back(Matrix_Translate(3.0f, -0.12f, -10.6f));
-        tireModels.push_back(Matrix_Translate(2.77f, -0.32f, -10.7f));
-        tireModels.push_back(Matrix_Translate(2.77f, -0.22f, -10.7f));
-        tireModels.push_back(Matrix_Translate(2.77f, -0.12f, -10.7f));
-        tireModels.push_back(Matrix_Translate(2.54f, -0.32f, -10.8f));
-        tireModels.push_back(Matrix_Translate(2.54f, -0.22f, -10.8f));
-        tireModels.push_back(Matrix_Translate(2.54f, -0.12f, -10.8f));
-
+        // Desenhamos os PNEUS
         for(int i = 0; i < tireModels.size(); i=i+2) {
             model = tireModels[i];
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(object_id_uniform, TIRE);
             DrawVirtualObject("tire");
         }
-
         for(int i = 1; i < tireModels.size(); i=i+2) {
             model = tireModels[i];
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -563,16 +565,15 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, TRUCK);
         DrawVirtualObject("truck");
 
-
         //Detecção de intersecção com os checkpoints
         glm::vec3 bbox_min = g_VirtualScene["truck"].bbox_min;
         glm::vec3 bbox_max = g_VirtualScene["truck"].bbox_max;
-        glm::vec4 bbox_minH = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
-        glm::vec4 bbox_maxH = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
+        glm::vec4 truck_bbox_min = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
+        glm::vec4 truck_bbox_max = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
 
-        bbox_minH = model * bbox_minH;
-        bbox_maxH = model * bbox_maxH;
-        glm::vec4 bbox_center = (bbox_minH + bbox_maxH);
+        truck_bbox_min = model * truck_bbox_min;
+        truck_bbox_max = model * truck_bbox_max;
+        glm::vec4 bbox_center = (truck_bbox_min + truck_bbox_max);
         bbox_center.x = bbox_center.x * 0.5f; bbox_center.y = bbox_center.y * 0.5f; bbox_center.z = bbox_center.z * 0.5f; bbox_center.w = 1.0f;
 
         if(ci < 6)
@@ -585,7 +586,8 @@ int main(int argc, char* argv[])
         }
         else    // Linha de chegada
         {
-            if(between(chegadaX, bbox_maxH.x, bbox_minH.x) && between(bbox_maxH.z, chegadaZ[0], chegadaZ[1]) && between(bbox_minH.z, chegadaZ[0], chegadaZ[1]))
+            if(between(chegadaX, truck_bbox_max.x, truck_bbox_min.x) && between(truck_bbox_max.z, chegadaZ[0], chegadaZ[1]) &&
+               between(truck_bbox_min.z, chegadaZ[0], chegadaZ[1]))
             {
                 finished = true;
             }
@@ -598,20 +600,20 @@ int main(int argc, char* argv[])
         DrawVirtualObject("plane");
 
         // Desenhamos o trofeu
-        model = Matrix_Translate(0.0f, -3.5f, 1.0f);
+        model = trofeuModel;
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, TROFEU);
         DrawVirtualObject("trofeu");
 
-        glm::vec3 t_bbox_min = g_VirtualScene["trofeu"].bbox_min;
-        glm::vec3 t_bbox_max = g_VirtualScene["trofeu"].bbox_max;
-        glm::vec4 t_bbox_minH = glm::vec4(t_bbox_min.x, t_bbox_min.y, t_bbox_min.z, 1.0f);
-        glm::vec4 t_bbox_maxH = glm::vec4(t_bbox_max.x, t_bbox_max.y, t_bbox_max.z, 1.0f);
+        bbox_min = g_VirtualScene["trofeu"].bbox_min;
+        bbox_max = g_VirtualScene["trofeu"].bbox_max;
+        glm::vec4 trofeu_bbox_min = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
+        glm::vec4 trofeu_bbox_max = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
 
-        t_bbox_minH = model * t_bbox_minH;
-        t_bbox_maxH = model * t_bbox_maxH;
+        trofeu_bbox_min = model * trofeu_bbox_min;
+        trofeu_bbox_max = model * trofeu_bbox_max;
 
-        if(bbInterseccao(bbox_minH, bbox_maxH, t_bbox_minH, t_bbox_maxH))
+        if(bbInterseccao(truck_bbox_min, truck_bbox_max, trofeu_bbox_min, trofeu_bbox_max))
         {
             printf("BATEU!");
         }
