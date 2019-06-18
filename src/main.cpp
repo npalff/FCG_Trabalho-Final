@@ -402,6 +402,39 @@ int main(int argc, char* argv[])
     // TROFEU
     glm::mat4 trofeuModel = Matrix_Translate(0.0f, -3.55f, 1.0f);
 
+    // BOUNDING BOXES DOS OBJETOS ESTÁTICOS
+    std::vector<glm::vec4> collision_BBox_Min;
+    std::vector<glm::vec4> collision_BBox_Max;
+
+    glm::vec3 bbox_min = g_VirtualScene["tree"].bbox_min;
+    glm::vec3 bbox_max = g_VirtualScene["tree"].bbox_max;
+    glm::vec4 bbox_minH = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
+    glm::vec4 bbox_maxH = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
+    for(int i = 0; i < treeModels.size(); i++)
+    {
+        collision_BBox_Min.push_back(treeModels[i] * bbox_minH);
+        collision_BBox_Max.push_back(treeModels[i] * bbox_maxH);
+    }
+
+    bbox_min = g_VirtualScene["tire"].bbox_min;
+    bbox_max = g_VirtualScene["tire"].bbox_max;
+    bbox_minH = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
+    bbox_maxH = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
+    for(int i = 3; i < tireModels.size()-3; i++)
+    {
+        collision_BBox_Min.push_back(tireModels[i] * bbox_minH);
+        collision_BBox_Max.push_back(tireModels[i] * bbox_maxH);
+    }
+
+    bbox_min = g_VirtualScene["trofeu"].bbox_min;
+    bbox_max = g_VirtualScene["trofeu"].bbox_max;
+    glm::vec4 trofeu_bbox_min = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
+    glm::vec4 trofeu_bbox_max = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
+    collision_BBox_Min.push_back(trofeuModel * trofeu_bbox_min);
+    collision_BBox_Max.push_back(trofeuModel * trofeu_bbox_max);
+
+    //- - - - - - - - - - - - - - - - - - - - - - - - - -
+
 
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -438,6 +471,10 @@ int main(int argc, char* argv[])
         float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
         float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
 
+        // Variáveis que medem a atualização das variáveis da câmera (utilizadas para não atualizar
+        // as variáveis da câmera diretamente, atualizando-as apenas se não houver colisões)
+        float deltaCameraX=0, deltaCameraY=0, deltaCameraZ=0, delta_g_CameraTheta=0;
+
         // Código para implementar free camera:
         if(pressedW)
         {
@@ -455,23 +492,58 @@ int main(int argc, char* argv[])
             if(speed < 0)
                 speed = 0;
         }
-            cameraX -= speed * deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
-            cameraY -= speed * deltaT * sin(g_CameraPhi);
-            cameraZ -= speed * deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
+        deltaCameraX = -speed * deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
+        deltaCameraY = -speed * deltaT * sin(g_CameraPhi);
+        deltaCameraZ = -speed * deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
+
         if(pressedS)
         {
-            cameraX += deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
-            cameraY += deltaT * sin(g_CameraPhi);
-            cameraZ += deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
+            deltaCameraX = deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
+            deltaCameraY = deltaT * sin(g_CameraPhi);
+            deltaCameraZ = deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
         }
         if(pressedA)
         {
-            g_CameraTheta += 1.5*deltaT;
+            delta_g_CameraTheta = 1.5*deltaT;
         }
         if(pressedD)
         {
-            g_CameraTheta -= 1.5*deltaT;
+            delta_g_CameraTheta = -1.5*deltaT;
         }
+
+
+        // TESTE DE COLISÃO SE ATUALIZAR POSIÇÃO DA CÂMERA/CARRO
+        bbox_min = g_VirtualScene["truck"].bbox_min;
+        bbox_max = g_VirtualScene["truck"].bbox_max;
+        glm::vec4 truck_bbox_min = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
+        glm::vec4 truck_bbox_max = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
+
+        glm::mat4 model = Matrix_Translate(cameraX+deltaCameraX, cameraY+deltaCameraY, cameraZ+deltaCameraZ)
+                        * Matrix_Rotate_Y(g_CameraTheta-CAMERA_THETA_INICIAL+delta_g_CameraTheta)
+                        * Matrix_Rotate_Y(M_PI);
+
+        truck_bbox_min = model * truck_bbox_min;
+        truck_bbox_max = model * truck_bbox_max;
+
+        int i=0;
+        bool collision = false;
+        while(i < collision_BBox_Min.size() &&  !collision)
+        {
+            if(bbInterseccao(truck_bbox_min, truck_bbox_max, collision_BBox_Min[i], collision_BBox_Max[i]))
+            {
+                collision = true;
+            }
+            i++;
+        }
+
+        if(!collision)
+        {
+            cameraX += deltaCameraX;
+            cameraY += deltaCameraY;
+            cameraZ += deltaCameraZ;
+            g_CameraTheta += delta_g_CameraTheta;
+        }
+
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 172-182 do documento "Aula_08_Sistemas_de_Coordenadas.pdf".
@@ -518,7 +590,7 @@ int main(int argc, char* argv[])
             projection = Matrix_Orthographic(l, r, b, t, nearplane, farplane);
         }
 
-        glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
+        model = Matrix_Identity(); // Transformação identidade de modelagem
 
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
         // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
@@ -566,10 +638,10 @@ int main(int argc, char* argv[])
         DrawVirtualObject("truck");
 
         //Detecção de intersecção com os checkpoints
-        glm::vec3 bbox_min = g_VirtualScene["truck"].bbox_min;
-        glm::vec3 bbox_max = g_VirtualScene["truck"].bbox_max;
-        glm::vec4 truck_bbox_min = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
-        glm::vec4 truck_bbox_max = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
+        bbox_min = g_VirtualScene["truck"].bbox_min;
+        bbox_max = g_VirtualScene["truck"].bbox_max;
+        truck_bbox_min = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
+        truck_bbox_max = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
 
         truck_bbox_min = model * truck_bbox_min;
         truck_bbox_max = model * truck_bbox_max;
@@ -604,19 +676,6 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, TROFEU);
         DrawVirtualObject("trofeu");
-
-        bbox_min = g_VirtualScene["trofeu"].bbox_min;
-        bbox_max = g_VirtualScene["trofeu"].bbox_max;
-        glm::vec4 trofeu_bbox_min = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
-        glm::vec4 trofeu_bbox_max = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
-
-        trofeu_bbox_min = model * trofeu_bbox_min;
-        trofeu_bbox_max = model * trofeu_bbox_max;
-
-        if(bbInterseccao(truck_bbox_min, truck_bbox_max, trofeu_bbox_min, trofeu_bbox_max))
-        {
-            printf("BATEU!");
-        }
 
         // Pegamos um vértice com coordenadas de modelo (0.5, 0.5, 0.5, 1) e o
         // passamos por todos os sistemas de coordenadas armazenados nas
