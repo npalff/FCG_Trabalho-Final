@@ -408,6 +408,8 @@ int main(int argc, char* argv[])
 
     glm::vec3 bbox_min = g_VirtualScene["tree"].bbox_min;
     glm::vec3 bbox_max = g_VirtualScene["tree"].bbox_max;
+    //bbox_max.x = 0.0f;
+    printf("%2.f, %2.f, %2.f \n %2.f, %2.f, %2.f", bbox_min.x, bbox_min.y, bbox_min.z, bbox_max.x, bbox_max.y, bbox_max.z);
     glm::vec4 bbox_minH = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
     glm::vec4 bbox_maxH = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
     for(int i = 0; i < treeModels.size(); i++)
@@ -420,7 +422,7 @@ int main(int argc, char* argv[])
     bbox_max = g_VirtualScene["tire"].bbox_max;
     bbox_minH = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
     bbox_maxH = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
-    for(int i = 3; i < tireModels.size()-3; i++)
+    for(int i = 0; i < tireModels.size(); i++)
     {
         collision_BBox_Min.push_back(tireModels[i] * bbox_minH);
         collision_BBox_Max.push_back(tireModels[i] * bbox_maxH);
@@ -605,6 +607,7 @@ int main(int argc, char* argv[])
         #define TIRE   4
         #define TIRE2  5
         #define TROFEU 6
+        #define TROFEU2 7
 
         // Desenhamos as ARVORES
         for(int i = 0; i < treeModels.size(); i++) {
@@ -675,6 +678,12 @@ int main(int argc, char* argv[])
         model = trofeuModel;
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, TROFEU);
+        DrawVirtualObject("trofeu");
+
+        // Desenhamoso trofeu 2 (Gouraud Shading)
+        model = Matrix_Translate(0.5f, -3.55f, 1.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, TROFEU2);
         DrawVirtualObject("trofeu");
 
         // Pegamos um vértice com coordenadas de modelo (0.5, 0.5, 0.5, 1) e o

@@ -13,6 +13,9 @@ in vec4 position_model;
 // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
 in vec2 texcoords;
 
+// Cor interpolada dos vértices do triângulo no qual está o ponto
+in vec3 cor_v;
+
 // Kds lidos do mtl
 //in vec4 materialKd;
 
@@ -29,6 +32,7 @@ uniform mat4 projection;
 #define TIRE   4
 #define TIRE2  5
 #define TROFEU 6
+#define TROFEU2 7
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -61,9 +65,9 @@ void main()
     // vértice.
     vec4 p = position_world;
 
-    // Normal do fragmento atual, interpolada pelo rasterizador a partir das
-    // normais de cada vértice.
-    vec4 n = normalize(normal);
+        // Normal do fragmento atual, interpolada pelo rasterizador a partir das
+        // normais de cada vértice.
+        vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
     vec4 l = normalize(vec4(1.0,1.0,0.0,0.0));
@@ -178,6 +182,11 @@ void main()
     float phong = pow(max(0.0, dot(r, v)), q);
 
     color = Kd * (lambert + 0.01) + Ks * phong;
+
+    if ( object_id == TROFEU2 )
+    {
+        color = cor_v;
+    }
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas

@@ -5,12 +5,15 @@
 layout (location = 0) in vec4 model_coefficients;
 layout (location = 1) in vec4 normal_coefficients;
 layout (location = 2) in vec2 texture_coefficients;
-//layout (location = 3) in vec4 color_coefficients;
 
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+
+// Identificador que define qual objeto está sendo desenhado no momento
+#define TROFEU2 7
+uniform int object_id;
 
 // Atributos de vértice que serão gerados como saída ("out") pelo Vertex Shader.
 // ** Estes serão interpolados pelo rasterizador! ** gerando, assim, valores
@@ -20,7 +23,8 @@ out vec4 position_world;
 out vec4 position_model;
 out vec4 normal;
 out vec2 texcoords;
-//out vec4 materialKd; //Kd
+out vec3 cor_v;
+
 
 void main()
 {
@@ -66,7 +70,38 @@ void main()
     // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
     texcoords = texture_coefficients;
 
-    // Kds lidos do mtl
-//    materialKd = color_coefficients;
+    cor_v = vec3(0.0f, 0.0f, 0.0f);
+
+    // GOURAUD SHADING
+    if ( object_id == TROFEU2 )
+    {
+        // Vetor que define o sentido da fonte de luz em relação ao vértice atual.
+        vec4 l = normalize(vec4(1.0,1.0,0.0,0.0));
+
+        // Normal do vértice atual
+        vec4 n = normalize(normal);
+
+        // Equação de Iluminação
+        float lambert = max(0,dot(n,l));
+
+        // Obtemos a posição da câmera utilizando a inversa da matriz que define o
+        // sistema de coordenadas da câmera.
+        vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
+        vec4 camera_position = inverse(view) * origin;
+
+        // Vetor que define o sentido da câmera em relação ao vértice atual.
+        vec4 v = normalize(camera_position - position_world);
+
+        // Vetor que define o sentido da reflexão especular ideal.
+        vec4 r = -l + 2*n*(dot(n, l));
+
+        // Equação de Iluminação
+        float q = 10;
+        float phong = pow(max(0.0, dot(r, v)), q);
+
+        vec3 Kd = vec3(1.0, 0.843, 0.0);
+        vec3 Ks = vec3(0.8,0.8,0.8);
+        cor_v = Kd * (lambert + 0.01) + Ks * phong;
+    }
 }
 
