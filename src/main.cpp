@@ -227,7 +227,6 @@ int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
     // sistema operacional, onde poderemos renderizar com OpenGL.
-    float speed=0;
     int success = glfwInit();
     if (!success)
     {
@@ -348,6 +347,9 @@ int main(int argc, char* argv[])
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
+
+    // Variável para controlar a velocidade do carro
+    float speed = 0;
 
     // Variáveis auxiliares utilizadas para chamada à função
     // TextRendering_ShowModelViewProjection(), armazenando matrizes 4x4.
@@ -618,6 +620,10 @@ int main(int argc, char* argv[])
             cameraZ += deltaCameraZ;
             g_CameraTheta += delta_g_CameraTheta;
         }
+        else
+        {
+            speed = 0;
+        }
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 172-182 do documento "Aula_08_Sistemas_de_Coordenadas.pdf".
@@ -713,8 +719,6 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, TRUCK);
         DrawVirtualObject("truck");
-
-        printf("%.2f, %.2f, %.2f\n", cameraX, cameraY, cameraZ);
 
         //Detecção de intersecção com os checkpoints
         bbox_min = g_VirtualScene["truck"].bbox_min;
