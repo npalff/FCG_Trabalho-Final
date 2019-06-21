@@ -137,8 +137,8 @@ bool bbInterseccao(glm::vec4 bb1_min, glm::vec4 bb1_max, glm::vec4 bb2_min, glm:
 struct SceneObject
 {
     std::string  name;        // Nome do objeto
-    void*        first_index; // Índice do primeiro vértice dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
-    int          num_indices; // Número de índices do objeto dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
+    size_t       first_index; // Índice do primeiro vértice dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
+    size_t       num_indices; // Número de índices do objeto dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
     GLenum       rendering_mode; // Modo de rasterização (GL_TRIANGLES, GL_TRIANGLE_STRIP, etc.)
     GLuint       vertex_array_object_id; // ID do VAO onde estão armazenados os atributos do modelo
     glm::vec3    bbox_min; // Axis-Aligned Bounding Box do objeto
@@ -327,6 +327,10 @@ int main(int argc, char* argv[])
     ComputeNormals(&trofeumodel);
     BuildTrianglesAndAddToVirtualScene(&trofeumodel);
 
+    ObjModel conemodel("../../data/cone.obj");
+    ComputeNormals(&conemodel);
+    BuildTrianglesAndAddToVirtualScene(&conemodel);
+
 
     if ( argc > 1 )
     {
@@ -355,6 +359,18 @@ int main(int argc, char* argv[])
     float t_prev = glfwGetTime(); // decorrido até o frame anterior
     float t_now = 0;              // decorrido até o momento
     float deltaT;                 // t_now - t_prev
+
+    // PONTOS DA CURVA para t=[0,1]
+    // Obstáculo 1
+    glm::vec4 p1 = {3.5f, 0.0f, -3.3f, 1.0f};
+    glm::vec4 p2 = {4.45f, 0.0f, -2.75f, 1.0f};
+    glm::vec4 p3 = {5.0f, 0.0f, -4.75f, 1.0f};
+    glm::vec4 p4 = {4.25f, 0.0f, -5.1f, 1.0f};
+    // Obstáculo 2
+    glm::vec4 p5 = {-1.5f, 0.0f, 0.1f, 1.0f};
+    glm::vec4 p6 = {0.0f, 0.0f, -0.65f, 1.0f};
+    glm::vec4 p7 = {-1.2f, 0.0f, -2.7f, 1.0f};
+    glm::vec4 p8 = {-2.0f, 0.0f, -2.0f, 1.0f};
 
     // Variáveis que definem as esferas dos checkpoints em cada curva
     std::vector<glm::vec4> checkpointsCenter;
@@ -402,14 +418,18 @@ int main(int argc, char* argv[])
     // TROFEU
     glm::mat4 trofeuModel = Matrix_Translate(0.0f, -3.55f, 1.0f);
 
+    // Bounding Boxe do Cone
+    glm::vec3 c_bbox_min = g_VirtualScene["cone_laranja"].bbox_min;
+    glm::vec3 c_bbox_max = g_VirtualScene["cone_laranja"].bbox_max;
+    glm::vec4 cone_bbox_min = glm::vec4(c_bbox_min.x, c_bbox_min.y, c_bbox_min.z, 1.0f);
+    glm::vec4 cone_bbox_max = glm::vec4(c_bbox_max.x, c_bbox_max.y, c_bbox_max.z, 1.0f);
+
     // BOUNDING BOXES DOS OBJETOS ESTÁTICOS
     std::vector<glm::vec4> collision_BBox_Min;
     std::vector<glm::vec4> collision_BBox_Max;
 
     glm::vec3 bbox_min = g_VirtualScene["tree"].bbox_min;
     glm::vec3 bbox_max = g_VirtualScene["tree"].bbox_max;
-    //bbox_max.x = 0.0f;
-    printf("%2.f, %2.f, %2.f \n %2.f, %2.f, %2.f", bbox_min.x, bbox_min.y, bbox_min.z, bbox_max.x, bbox_max.y, bbox_max.z);
     glm::vec4 bbox_minH = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
     glm::vec4 bbox_maxH = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
     for(int i = 0; i < treeModels.size(); i++)
@@ -463,6 +483,22 @@ int main(int argc, char* argv[])
         t_now = glfwGetTime();
         deltaT = t_now - t_prev;
         t_prev = t_now;
+
+        // Cálculo das posições dos obstáculos com curvas bezier
+        float t = float(fabs(sin(t_now*0.5f))); // Divisão para reduzir velocidade do cone
+        glm::vec4 c12 = p1 + t*(p2-p1);
+        glm::vec4 c23 = p2 + t*(p3-p2);
+        glm::vec4 c34 = p3 + t*(p4-p3);
+        glm::vec4 c123 = c12 + t*(c23 - c12);
+        glm::vec4 c234 = c23 + t*(c34 - c23);
+        glm::vec4 c = c123 + t*(c234 - c123);
+
+        glm::vec4 b56 = p5 + t*(p6-p5);
+        glm::vec4 b67 = p6 + t*(p7-p6);
+        glm::vec4 b78 = p7 + t*(p8-p7);
+        glm::vec4 b567 = b56 + t*(b67 - b56);
+        glm::vec4 b678 = b67 + t*(b78 - b67);
+        glm::vec4 b = b567 + t*(b678 - b567);
 
         // Computamos a posição da câmera utilizando coordenadas esféricas.  As
         // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
@@ -537,6 +573,23 @@ int main(int argc, char* argv[])
             }
             i++;
         }
+        // TESTE DE COLISÃO COM OS OBSTÁCULOS
+        std::vector<glm::vec4> bbox_min_obstaculos;
+        std::vector<glm::vec4> bbox_max_obstaculos;
+        model = Matrix_Translate(c.x, c.y, c.z) * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        bbox_min_obstaculos.push_back(model * cone_bbox_min);
+        bbox_max_obstaculos.push_back(model * cone_bbox_max);
+        model = Matrix_Translate(b.x, b.y, b.z) * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        bbox_min_obstaculos.push_back(model * cone_bbox_min);
+        bbox_max_obstaculos.push_back(model * cone_bbox_max);
+        for(int i=0; i<bbox_min_obstaculos.size(); i++)
+        {
+            if(bbInterseccao(truck_bbox_min, truck_bbox_max, bbox_min_obstaculos[i], bbox_max_obstaculos[i]))
+            {
+                collision = true;
+            }
+        }
+
 
         if(!collision)
         {
@@ -545,7 +598,6 @@ int main(int argc, char* argv[])
             cameraZ += deltaCameraZ;
             g_CameraTheta += delta_g_CameraTheta;
         }
-
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 172-182 do documento "Aula_08_Sistemas_de_Coordenadas.pdf".
@@ -600,14 +652,16 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        #define SPHERE 0
-        #define TREE   1
-        #define PLANE  2
-        #define TRUCK  3
-        #define TIRE   4
-        #define TIRE2  5
-        #define TROFEU 6
+        #define SPHERE  0
+        #define TREE    1
+        #define PLANE   2
+        #define TRUCK   3
+        #define TIRE    4
+        #define TIRE2   5
+        #define TROFEU  6
         #define TROFEU2 7
+        #define CONE_B  8
+        #define CONE_L  9
 
         // Desenhamos as ARVORES
         for(int i = 0; i < treeModels.size(); i++) {
@@ -639,6 +693,8 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, TRUCK);
         DrawVirtualObject("truck");
+
+        printf("%.2f, %.2f, %.2f\n", cameraX, cameraY, cameraZ);
 
         //Detecção de intersecção com os checkpoints
         bbox_min = g_VirtualScene["truck"].bbox_min;
@@ -680,11 +736,36 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, TROFEU);
         DrawVirtualObject("trofeu");
 
-        // Desenhamoso trofeu 2 (Gouraud Shading)
+        // Desenhamos o trofeu 2 (Gouraud Shading)
         model = Matrix_Translate(0.5f, -3.55f, 1.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, TROFEU2);
         DrawVirtualObject("trofeu");
+
+        // Desenhamos os cones
+        model = Matrix_Translate(c.x, c.y, c.z)
+              * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, CONE_B);
+        DrawVirtualObject("cone_branco");
+
+        model = Matrix_Translate(c.x, c.y, c.z)
+              * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, CONE_L);
+        DrawVirtualObject("cone_laranja");
+
+        model = Matrix_Translate(b.x, b.y, b.z)
+              * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, CONE_B);
+        DrawVirtualObject("cone_branco");
+
+        model = Matrix_Translate(b.x, b.y, b.z)
+              * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, CONE_L);
+        DrawVirtualObject("cone_laranja");
 
         // Pegamos um vértice com coordenadas de modelo (0.5, 0.5, 0.5, 1) e o
         // passamos por todos os sistemas de coordenadas armazenados nas
@@ -838,7 +919,7 @@ void DrawVirtualObject(const char* object_name)
         g_VirtualScene[object_name].rendering_mode,
         g_VirtualScene[object_name].num_indices,
         GL_UNSIGNED_INT,
-        (void*)g_VirtualScene[object_name].first_index
+        (void*)(g_VirtualScene[object_name].first_index * sizeof(GLuint))
     );
 
     // "Desligamos" o VAO, evitando assim que operações posteriores venham a
@@ -1068,7 +1149,7 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
 
         SceneObject theobject;
         theobject.name           = model->shapes[shape].name;
-        theobject.first_index    = (void*)first_index; // Primeiro índice
+        theobject.first_index    = first_index; // Primeiro índice
         theobject.num_indices    = last_index - first_index + 1; // Número de indices
         theobject.rendering_mode = GL_TRIANGLES;       // Índices correspondem ao tipo de rasterização GL_TRIANGLES.
         theobject.vertex_array_object_id = vertex_array_object_id;

@@ -33,6 +33,8 @@ uniform mat4 projection;
 #define TIRE2  5
 #define TROFEU 6
 #define TROFEU2 7
+#define CONE_B 8
+#define CONE_L 9
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -175,6 +177,16 @@ void main()
         Kd = vec3(1.0, 0.843, 0.0);
         Ks = vec3(0.8,0.8,0.8);
         q = 10;
+    }
+    else if ( object_id == CONE_B )
+    {
+        Kd = vec3(0.9, 0.9, 0.9);
+        l = n + vec4(0.0, 1.0, 0.0, 0.0); // Alteração da direção da luz para ver melhor o cone
+    }
+    else if ( object_id == CONE_L )
+    {
+        Kd = vec3(1.0, 0.333, 0.0);
+        l = n + vec4(0.0, 1.0, 0.0, 0.0); // Alteração da direção da luz para ver melhor o cone
     }
 
     // Equação de Iluminação
