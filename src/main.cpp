@@ -552,7 +552,7 @@ int main(int argc, char* argv[])
         }
 
         deltaCameraX = -speed * deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
-        deltaCameraY = -speed * deltaT * sin(g_CameraPhi);
+       // deltaCameraY = -speed * deltaT * sin(g_CameraPhi);
         deltaCameraZ = -speed * deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
 
         if(pressedA)
