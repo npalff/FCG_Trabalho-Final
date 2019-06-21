@@ -131,6 +131,8 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 bool between(float num, float extremo1, float extremo2);
 bool bbContainsPoint(glm::vec3 bb1, glm::vec3 bb2, glm::vec3 point);
 bool bbInterseccao(glm::vec4 bb1_min, glm::vec4 bb1_max, glm::vec4 bb2_min, glm::vec4 bb2_max);
+glm::vec4 getBbox_min(ObjModel* model, glm::mat4 model_matrix); // Utilizada para retornar a bbox após as transformações aplicadas sobre o objeto
+glm::vec4 getBbox_max(ObjModel* model, glm::mat4 model_matrix);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -430,32 +432,20 @@ int main(int argc, char* argv[])
     std::vector<glm::vec4> collision_BBox_Min;
     std::vector<glm::vec4> collision_BBox_Max;
 
-    glm::vec3 bbox_min = g_VirtualScene["tree"].bbox_min;
-    glm::vec3 bbox_max = g_VirtualScene["tree"].bbox_max;
-    glm::vec4 bbox_minH = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
-    glm::vec4 bbox_maxH = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
     for(int i = 0; i < treeModels.size(); i++)
     {
-        collision_BBox_Min.push_back(treeModels[i] * bbox_minH);
-        collision_BBox_Max.push_back(treeModels[i] * bbox_maxH);
+        collision_BBox_Min.push_back(getBbox_min(&treemodel, treeModels[i]));
+        collision_BBox_Max.push_back(getBbox_max(&treemodel, treeModels[i]));
     }
 
-    bbox_min = g_VirtualScene["tire"].bbox_min;
-    bbox_max = g_VirtualScene["tire"].bbox_max;
-    bbox_minH = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
-    bbox_maxH = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
     for(int i = 0; i < tireModels.size(); i++)
     {
-        collision_BBox_Min.push_back(tireModels[i] * bbox_minH);
-        collision_BBox_Max.push_back(tireModels[i] * bbox_maxH);
+        collision_BBox_Min.push_back(getBbox_min(&tiremodel, tireModels[i]));
+        collision_BBox_Max.push_back(getBbox_max(&tiremodel, tireModels[i]));
     }
 
-    bbox_min = g_VirtualScene["trofeu"].bbox_min;
-    bbox_max = g_VirtualScene["trofeu"].bbox_max;
-    glm::vec4 trofeu_bbox_min = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
-    glm::vec4 trofeu_bbox_max = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
-    collision_BBox_Min.push_back(trofeuModel * trofeu_bbox_min);
-    collision_BBox_Max.push_back(trofeuModel * trofeu_bbox_max);
+    collision_BBox_Min.push_back(getBbox_min(&trofeumodel, trofeuModel));
+    collision_BBox_Max.push_back(getBbox_max(&trofeumodel, trofeuModel));
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -532,11 +522,7 @@ int main(int argc, char* argv[])
             if(speed < 0 && !pressedS)
                 speed = 0;
         }
-        /*
-        deltaCameraX = -speed * deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
-        deltaCameraY = -speed * deltaT * sin(g_CameraPhi);
-        deltaCameraZ = -speed * deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
-*/
+
         if(pressedS)
         {
             if (speed > 2)
@@ -545,7 +531,6 @@ int main(int argc, char* argv[])
                 speed -= 0.0035;
             if (speed<=0 && speed >= MINIMUM_SPEED)
                 speed -= 0.03;
-
         }
 
         if(!pressedS && speed<0)
@@ -573,17 +558,13 @@ int main(int argc, char* argv[])
 
 
         // TESTE DE COLISÃO SE ATUALIZAR POSIÇÃO DA CÂMERA/CARRO
-        bbox_min = g_VirtualScene["truck"].bbox_min;
-        bbox_max = g_VirtualScene["truck"].bbox_max;
-        glm::vec4 truck_bbox_min = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
-        glm::vec4 truck_bbox_max = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
-
         glm::mat4 model = Matrix_Translate(cameraX+deltaCameraX, cameraY+deltaCameraY, cameraZ+deltaCameraZ)
                         * Matrix_Rotate_Y(g_CameraTheta-CAMERA_THETA_INICIAL+delta_g_CameraTheta)
-                        * Matrix_Rotate_Y(M_PI);
+                        * Matrix_Rotate_Y(M_PI)
+                        * Matrix_Scale(0.75, 0.75, 0.75);
 
-        truck_bbox_min = model * truck_bbox_min;
-        truck_bbox_max = model * truck_bbox_max;
+        glm::vec4 truck_bbox_min = getBbox_min(&truckmodel, model);
+        glm::vec4 truck_bbox_max = getBbox_max(&truckmodel, model);
 
         int i=0;
         bool collision = false;
@@ -595,6 +576,7 @@ int main(int argc, char* argv[])
             }
             i++;
         }
+
         // TESTE DE COLISÃO COM OS OBSTÁCULOS
         std::vector<glm::vec4> bbox_min_obstaculos;
         std::vector<glm::vec4> bbox_max_obstaculos;
@@ -611,7 +593,6 @@ int main(int argc, char* argv[])
                 collision = true;
             }
         }
-
 
         if(!collision)
         {
@@ -714,20 +695,17 @@ int main(int argc, char* argv[])
         // Desenhamos O TRUCK
         model = Matrix_Translate(cameraX,cameraY,cameraZ)
               * Matrix_Rotate_Y(g_CameraTheta-CAMERA_THETA_INICIAL)
-              * Matrix_Rotate_Y(M_PI);
+              * Matrix_Rotate_Y(M_PI)
+              * Matrix_Scale(0.75, 0.75, 0.75);
 
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, TRUCK);
         DrawVirtualObject("truck");
 
         //Detecção de intersecção com os checkpoints
-        bbox_min = g_VirtualScene["truck"].bbox_min;
-        bbox_max = g_VirtualScene["truck"].bbox_max;
-        truck_bbox_min = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
-        truck_bbox_max = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
+        truck_bbox_min = getBbox_min(&truckmodel, model);
+        truck_bbox_max = getBbox_max(&truckmodel, model);
 
-        truck_bbox_min = model * truck_bbox_min;
-        truck_bbox_max = model * truck_bbox_max;
         glm::vec4 bbox_center = (truck_bbox_min + truck_bbox_max);
         bbox_center.x = bbox_center.x * 0.5f; bbox_center.y = bbox_center.y * 0.5f; bbox_center.z = bbox_center.z * 0.5f; bbox_center.w = 1.0f;
 
@@ -1086,6 +1064,76 @@ void ComputeNormals(ObjModel* model)
     }
 }
 
+// Utilizada para retornar a bbox após as transformações aplicadas sobre o objeto
+glm::vec4 getBbox_min(ObjModel* model, glm::mat4 transformations)
+{
+    glm::vec4 bbox_min;
+
+    size_t num_triangles = model->shapes[0].mesh.num_face_vertices.size();
+    bbox_min = glm::vec4(100.0, 100.0, 100.0, 1.0f);
+
+    for (size_t triangle = 0; triangle < num_triangles; ++triangle)
+    {
+        assert(model->shapes[0].mesh.num_face_vertices[triangle] == 3);
+
+        for (size_t vertex = 0; vertex < 3; ++vertex)
+        {
+            tinyobj::index_t idx = model->shapes[0].mesh.indices[3*triangle + vertex];
+
+            const float vx = model->attrib.vertices[3*idx.vertex_index + 0];
+            const float vy = model->attrib.vertices[3*idx.vertex_index + 1];
+            const float vz = model->attrib.vertices[3*idx.vertex_index + 2];
+
+            glm::vec4 vertice;
+            vertice.x = vx;
+            vertice.y = vy;
+            vertice.z = vz;
+            vertice.w = 1.0f;
+            vertice = transformations * vertice;
+
+            bbox_min.x = std::min(bbox_min.x, vertice.x);
+            bbox_min.y = std::min(bbox_min.y, vertice.y);
+            bbox_min.z = std::min(bbox_min.z, vertice.z);
+        }
+    }
+    return bbox_min;
+}
+
+// Utilizada para retornar a bbox após as transformações aplicadas sobre o objeto
+glm::vec4 getBbox_max(ObjModel* model, glm::mat4 transformations)
+{
+    glm::vec4 bbox_max;
+
+    size_t num_triangles = model->shapes[0].mesh.num_face_vertices.size();
+    bbox_max = glm::vec4(-100, -100, -100, 1.0f);
+
+    for (size_t triangle = 0; triangle < num_triangles; ++triangle)
+    {
+        assert(model->shapes[0].mesh.num_face_vertices[triangle] == 3);
+
+        for (size_t vertex = 0; vertex < 3; ++vertex)
+        {
+            tinyobj::index_t idx = model->shapes[0].mesh.indices[3*triangle + vertex];
+
+            const float vx = model->attrib.vertices[3*idx.vertex_index + 0];
+            const float vy = model->attrib.vertices[3*idx.vertex_index + 1];
+            const float vz = model->attrib.vertices[3*idx.vertex_index + 2];
+
+            glm::vec4 vertice;
+            vertice.x = vx;
+            vertice.y = vy;
+            vertice.z = vz;
+            vertice.w = 1.0f;
+            vertice = transformations * vertice;
+
+            bbox_max.x = std::max(bbox_max.x, vertice.x);
+            bbox_max.y = std::max(bbox_max.y, vertice.y);
+            bbox_max.z = std::max(bbox_max.z, vertice.z);
+        }
+    }
+    return bbox_max;
+}
+
 // Constrói triângulos para futura renderização a partir de um ObjModel.
 void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
 {
@@ -1098,13 +1146,6 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
     std::vector<float>  normal_coefficients;
     std::vector<float>  texture_coefficients;
     std::vector<float>  color_coefficients;
-
-//    for (size_t i = 0; i < model->materials.size(); ++i) {
-//        color_coefficients.push_back(model->materials[i].diffuse[0]);
-//        color_coefficients.push_back(model->materials[i].diffuse[1]);
-//        color_coefficients.push_back(model->materials[i].diffuse[2]);
-//        model_coefficients.push_back( 1.0f ); // A
-//    }
 
     for (size_t shape = 0; shape < model->shapes.size(); ++shape)
     {
@@ -1222,20 +1263,6 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
         glEnableVertexAttribArray(location);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
-
-//    if ( !color_coefficients.empty() )
-//    {
-//        GLuint VBO_color_coefficients_id;
-//        glGenBuffers(1, &VBO_color_coefficients_id);
-//        glBindBuffer(GL_ARRAY_BUFFER, VBO_color_coefficients_id);
-//        glBufferData(GL_ARRAY_BUFFER, color_coefficients.size()*sizeof(float), NULL, GL_STATIC_DRAW);
-//        glBufferSubData(GL_ARRAY_BUFFER, 0, color_coefficients.size()*sizeof(float), color_coefficients.data());
-//        location = 3; // "(location = 3)" em "shader_vertex.glsl"
-//        number_of_dimensions = 4; // vec4 em "shader_vertex.glsl"
-//        glVertexAttribPointer(location, number_of_dimensions, GL_FLOAT, GL_FALSE, 0, 0);
-//        glEnableVertexAttribArray(location);
-//        glBindBuffer(GL_ARRAY_BUFFER, 0);
-//    }
 
     GLuint indices_id;
     glGenBuffers(1, &indices_id);
