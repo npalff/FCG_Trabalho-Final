@@ -508,10 +508,20 @@ int main(int argc, char* argv[])
         // Código para implementar free camera:
         if(pressedW)
         {
+           if (speed<0)
+           {
+            if (speed < -1)
+                speed += 0.007;
+            else if(speed < 0)
+                speed += 0.008;
+           }
+           else
+           {
             if (speed < 1.8)
                 speed += 0.055;
             else if (speed <= MAXIMUM_SPEED)
                 speed += 0.006;
+           }
         }
         if(!pressedW && speed > 0)
         {
@@ -525,18 +535,18 @@ int main(int argc, char* argv[])
         if(pressedS)
         {
             if (speed > 2)
-                speed -= 0.008;
+                speed -= 0.01;
             else if(speed > 0)
-                speed -= 0.004;
+                speed -= 0.009;
             if (speed<=0 && speed >= MINIMUM_SPEED)
                 speed -= 0.03;
         }
         if(!pressedS && speed<0)
         {
             if (speed < -1)
-                speed += 0.003;
+                speed += 0.005;
             else if(speed < 0)
-                speed += 0.002;
+                speed += 0.008;
             if(speed > 0 && !pressedW)
                 speed = 0;
         }
@@ -719,7 +729,7 @@ int main(int argc, char* argv[])
         {
             if(between(chegadaX, truck_bbox_max.x, truck_bbox_min.x) && between(truck_bbox_max.z, chegadaZ[0], chegadaZ[1]) &&
                between(truck_bbox_min.z, chegadaZ[0], chegadaZ[1]))
-            {
+{// as           {
                 finished = true;
             }
         }
