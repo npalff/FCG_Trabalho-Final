@@ -49,8 +49,8 @@
 #include "matrices.h"
 
 #define M_PI 3.14159265358979323846
-#define MINIMUM_SPEED 0.5
-#define MAXIMUM_SPEED 3.7
+#define MINIMUM_SPEED -2
+#define MAXIMUM_SPEED 4
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -480,30 +480,50 @@ int main(int argc, char* argv[])
         // Código para implementar free camera:
         if(pressedW)
         {
-            if (speed < 1.4)
-                speed += 0.03;
+            if (speed < 1.8)
+                speed += 0.075;
             else if (speed <= MAXIMUM_SPEED)
-                speed += 0.001;
+                speed += 0.006;
         }
-        if(!pressedW)
+        if(!pressedW && speed > 0)
         {
             if (speed > 2)
                 speed -= 0.008;
             else if(speed > 0)
                 speed -= 0.0035;
-            if(speed < 0)
+            if(speed < 0 && !pressedS)
                 speed = 0;
         }
+        /*
+        deltaCameraX = -speed * deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
+        deltaCameraY = -speed * deltaT * sin(g_CameraPhi);
+        deltaCameraZ = -speed * deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
+*/
+        if(pressedS)
+        {
+            if (speed > 2)
+                speed -= 0.008;
+            else if(speed > 0)
+                speed -= 0.0035;
+            if (speed<=0 && speed >= MINIMUM_SPEED)
+                speed -= 0.03;
+
+        }
+
+        if(!pressedS && speed<0)
+        {
+            if (speed < -1)
+                speed += 0.003;
+            else if(speed < 0)
+                speed += 0.002;
+            if(speed > 0 && !pressedW)
+                speed = 0;
+        }
+
         deltaCameraX = -speed * deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
         deltaCameraY = -speed * deltaT * sin(g_CameraPhi);
         deltaCameraZ = -speed * deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
 
-        if(pressedS)
-        {
-            deltaCameraX = deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
-            deltaCameraY = deltaT * sin(g_CameraPhi);
-            deltaCameraZ = deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
-        }
         if(pressedA)
         {
             delta_g_CameraTheta = 1.5*deltaT;
