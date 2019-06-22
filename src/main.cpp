@@ -12,7 +12,7 @@
 // programa C++, sendo necessário somente adicionar o caractere
 // "c" antes de seu nome, e remover o sufixo ".h". Exemplo:
 //    #include <stdio.h> // Em C
-//  vira
+//    vira
 //    #include <cstdio> // Em C++
 //
 #include <cmath>
@@ -415,15 +415,15 @@ int main(int argc, char* argv[])
 
     // PNEUS
     std::vector<glm::mat4> tireModels;
-    tireModels.push_back(Matrix_Translate(3.0f, -0.32f, -10.6f));
-    tireModels.push_back(Matrix_Translate(3.0f, -0.22f, -10.6f));
-    tireModels.push_back(Matrix_Translate(3.0f, -0.12f, -10.6f));
-    tireModels.push_back(Matrix_Translate(2.77f, -0.32f, -10.7f));
-    tireModels.push_back(Matrix_Translate(2.77f, -0.22f, -10.7f));
-    tireModels.push_back(Matrix_Translate(2.77f, -0.12f, -10.7f));
-    tireModels.push_back(Matrix_Translate(2.54f, -0.32f, -10.8f));
-    tireModels.push_back(Matrix_Translate(2.54f, -0.22f, -10.8f));
-    tireModels.push_back(Matrix_Translate(2.54f, -0.12f, -10.8f));
+    tireModels.push_back(Matrix_Translate(5.6f, -0.32f, -11.8f));
+    tireModels.push_back(Matrix_Translate(5.6f, -0.22f, -11.8f));
+    tireModels.push_back(Matrix_Translate(5.6f, -0.12f, -11.8f));
+    tireModels.push_back(Matrix_Translate(5.83f, -0.32f, -11.7f));
+    tireModels.push_back(Matrix_Translate(5.83f, -0.22f, -11.7f));
+    tireModels.push_back(Matrix_Translate(5.83f, -0.12f, -11.7f));
+    tireModels.push_back(Matrix_Translate(6.06f, -0.32f, -11.6f));
+    tireModels.push_back(Matrix_Translate(6.06f, -0.22f, -11.6f));
+    tireModels.push_back(Matrix_Translate(6.06f, -0.12f, -11.6f));
 
     // TROFEU
     glm::mat4 trofeuModel = Matrix_Translate(0.0f, -3.55f, 1.0f);
@@ -448,6 +448,14 @@ int main(int argc, char* argv[])
     {
         collision_BBox_Min.push_back(getBbox_min(&tiremodel, tireModels[i]));
         collision_BBox_Max.push_back(getBbox_max(&tiremodel, tireModels[i]));
+//        glm::vec3 bbox_min = g_VirtualScene["tire"].bbox_min;
+//        glm::vec3 bbox_max = g_VirtualScene["tire"].bbox_max;
+//        glm::vec4 bbox_min_H = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
+//        glm::vec4 bbox_max_H = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
+//        bbox_min_H = Matrix_Scale(0.8, 1.0, 0.8) * bbox_min_H;
+//        bbox_max_H = Matrix_Scale(0.8, 1.0, 0.8) * bbox_max_H;
+//        collision_BBox_Min.push_back(tireModels[i] * bbox_min_H);
+//        collision_BBox_Max.push_back(tireModels[i] * bbox_max_H);
     }
 
     glm::vec4 trofeu_bbox_min = getBbox_min(&trofeumodel, trofeuModel);
@@ -469,7 +477,7 @@ int main(int argc, char* argv[])
         // Conversaremos sobre sistemas de cores nas aulas de Modelos de Iluminação.
         //
         //           R     G     B     A
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor(0.94f, 0.972f, 1.0f, 1.0f);
 
         // "Pintamos" todos os pixels do framebuffer com a cor definida acima,
         // e também resetamos todos os pixels do Z-buffer (depth buffer).
@@ -565,7 +573,6 @@ int main(int argc, char* argv[])
         {//Se estivermos com a câmera livre, não alteramos o Y, para o carro não passar pelo chão ou sair voando
             deltaCameraY = -speed * deltaT * sin(g_CameraPhi);
         }
-
 
         if(pressedA)
         {
@@ -721,12 +728,6 @@ int main(int argc, char* argv[])
         #define CONE_L  9
         #define PODIO1  10
         #define PODIO2  11
-
-        // Desenhamos a esfera do ambiente
-        model = Matrix_Scale(15.0f, 15.0f, 15.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, SPHERE);
-        DrawVirtualObject("sphere");
 
         // Desenhamos as ARVORES
         for(int i = 0; i < treeModels.size(); i++) {
