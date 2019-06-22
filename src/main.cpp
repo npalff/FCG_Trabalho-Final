@@ -560,8 +560,12 @@ int main(int argc, char* argv[])
         }
 
         deltaCameraX = -speed * deltaT * cos(g_CameraPhi) * sin(g_CameraTheta);
-       // deltaCameraY = -speed * deltaT * sin(g_CameraPhi);
         deltaCameraZ = -speed * deltaT * cos(g_CameraPhi) * cos(g_CameraTheta);
+        if(lookAt_camera)
+        {//Se estivermos com a câmera livre, não alteramos o Y, para o carro não passar pelo chão ou sair voando
+            deltaCameraY = -speed * deltaT * sin(g_CameraPhi);
+        }
+
 
         if(pressedA)
         {
@@ -598,9 +602,9 @@ int main(int argc, char* argv[])
         if(!lookAt_camera && finished && bbInterseccao(truck_bbox_min, truck_bbox_max, trofeu_bbox_min, trofeu_bbox_max))
         {
             lookAt_camera = true;
-            g_CameraTheta = 0.75f; // Atualizacao da posicao da camera
+            g_CameraTheta = 0.5f; // Atualizacao da posicao da camera
             g_CameraPhi = 0.5f;
-            g_CameraDistance = 5.5f;
+            g_CameraDistance = 4.0f;
         }
 
         // TESTE DE COLISÃO COM OS OBSTÁCULOS
@@ -647,6 +651,9 @@ int main(int argc, char* argv[])
         else
         {
             camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
+            // Translação da posição da câmera igual à translação do ponto "l" em relação à origem.
+            // Evita erros na movimentação da câmera, uma vez que as operações realizadas são em relação à origem.
+            camera_position_c  = Matrix_Translate(camera_lookat_l.x,camera_lookat_l.y,camera_lookat_l.z) * camera_position_c;
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
         }
 
