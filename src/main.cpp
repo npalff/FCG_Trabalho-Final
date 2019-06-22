@@ -190,6 +190,9 @@ bool pressedS = false;
 bool pressedA = false;
 bool pressedD = false;
 
+// Variável que controla o tipo de câmera
+bool lookAt_camera = false;
+
 // Variáveis que controlam rotação do antebraço
 float g_ForearmAngleZ = 0.0f;
 float g_ForearmAngleX = 0.0f;
@@ -332,6 +335,9 @@ int main(int argc, char* argv[])
     ComputeNormals(&conemodel);
     BuildTrianglesAndAddToVirtualScene(&conemodel);
 
+    ObjModel podiomodel("../../data/podio.obj");
+    ComputeNormals(&podiomodel);
+    BuildTrianglesAndAddToVirtualScene(&podiomodel);
 
     if ( argc > 1 )
     {
@@ -444,8 +450,10 @@ int main(int argc, char* argv[])
         collision_BBox_Max.push_back(getBbox_max(&tiremodel, tireModels[i]));
     }
 
-    collision_BBox_Min.push_back(getBbox_min(&trofeumodel, trofeuModel));
-    collision_BBox_Max.push_back(getBbox_max(&trofeumodel, trofeuModel));
+    glm::vec4 trofeu_bbox_min = getBbox_min(&trofeumodel, trofeuModel);
+    glm::vec4 trofeu_bbox_max = getBbox_max(&trofeumodel, trofeuModel);
+    collision_BBox_Min.push_back(trofeu_bbox_min);
+    collision_BBox_Max.push_back(trofeu_bbox_max);
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -575,6 +583,16 @@ int main(int argc, char* argv[])
             i++;
         }
 
+        // Se o jogador terminou a corrida e "entrar" no troféu, mudamos para a câmera look at
+        // Teste !lookAt_camera para não reatualizar posição da câmera mais de uma vez
+        if(!lookAt_camera && finished && bbInterseccao(truck_bbox_min, truck_bbox_max, trofeu_bbox_min, trofeu_bbox_max))
+        {
+            lookAt_camera = true;
+            g_CameraTheta = 0.75f; // Atualizacao da posicao da camera
+            g_CameraPhi = 0.5f;
+            g_CameraDistance = 5.5f;
+        }
+
         // TESTE DE COLISÃO COM OS OBSTÁCULOS
         std::vector<glm::vec4> bbox_min_obstaculos;
         std::vector<glm::vec4> bbox_max_obstaculos;
@@ -606,19 +624,36 @@ int main(int argc, char* argv[])
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 172-182 do documento "Aula_08_Sistemas_de_Coordenadas.pdf".
-        glm::vec4 camera_position_c  = glm::vec4(cameraX,cameraY,cameraZ,1.0f); // Ponto "c", centro da câmera
-        //glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-        glm::vec4 camera_view_vector = glm::vec4(-x,-y,-z,0.0f); // Vetor "view", sentido para onde a câmera está virada
-        glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+        glm::vec4 camera_position_c;
+        glm::vec4 camera_lookat_l = glm::vec4(-0.05f,0.2f,1.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando;
+        glm::vec4 camera_view_vector;
+        glm::vec4 camera_up_vector = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+
+        if(!lookAt_camera)
+        {
+            camera_position_c  = glm::vec4(cameraX,cameraY,cameraZ,1.0f); // Ponto "c", centro da câmera
+            camera_view_vector = glm::vec4(-x,-y,-z,0.0f); // Vetor "view", sentido para onde a câmera está virada
+        }
+        else
+        {
+            camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
+            camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
+        }
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slide 186 do documento "Aula_08_Sistemas_de_Coordenadas.pdf".
-        glm::vec4 camera_recuada = camera_position_c - camera_view_vector; // Recuamos a câmera
-        camera_recuada.y =+ 2.0f;
-        glm::vec4 camera_view_alterado = camera_view_vector + glm::vec4(0.0f, -2.0f, 0.0f, 0.0f);
-
-        glm::mat4 view = Matrix_Camera_View(camera_recuada, camera_view_alterado, camera_up_vector);
-        //glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+        glm::mat4 view;
+        if(!lookAt_camera)
+        {
+            glm::vec4 camera_recuada = camera_position_c - camera_view_vector; // Recuamos a câmera
+            camera_recuada.y =+ 2.0f; // Elevamos a câmera, para uma vista de cima
+            glm::vec4 camera_view_alterado = camera_view_vector + glm::vec4(0.0f, -2.0f, 0.0f, 0.0f); // Alteramos o view para "olhar" para o carro
+            view = Matrix_Camera_View(camera_recuada, camera_view_alterado, camera_up_vector);
+        }
+        else
+        {
+            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+        }
 
         // Agora computamos a matriz de Projeção.
         glm::mat4 projection;
@@ -667,6 +702,14 @@ int main(int argc, char* argv[])
         #define TROFEU2 7
         #define CONE_B  8
         #define CONE_L  9
+        #define PODIO1  10
+        #define PODIO2  11
+
+        // Desenhamos a esfera do ambiente
+        model = Matrix_Scale(15.0f, 15.0f, 15.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, SPHERE);
+        DrawVirtualObject("sphere");
 
         // Desenhamos as ARVORES
         for(int i = 0; i < treeModels.size(); i++) {
@@ -691,10 +734,19 @@ int main(int argc, char* argv[])
         }
 
         // Desenhamos O TRUCK
-        model = Matrix_Translate(cameraX,cameraY,cameraZ)
-              * Matrix_Rotate_Y(g_CameraTheta-CAMERA_THETA_INICIAL)
-              * Matrix_Rotate_Y(M_PI)
-              * Matrix_Scale(0.75, 0.75, 0.75);
+        if(!lookAt_camera)
+        {
+            model = Matrix_Translate(cameraX,cameraY,cameraZ)
+                  * Matrix_Rotate_Y(g_CameraTheta-CAMERA_THETA_INICIAL)
+                  * Matrix_Rotate_Y(M_PI)
+                  * Matrix_Scale(0.75, 0.75, 0.75);
+        }
+        else
+        {
+            model = Matrix_Translate(-0.05f,0.2f,1.0f)
+                  * Matrix_Rotate_Y(-M_PI/2.5f)
+                  * Matrix_Scale(0.75, 0.75, 0.75);
+        }
 
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, TRUCK);
@@ -730,17 +782,39 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
 
-        // Desenhamos o trofeu
-        model = trofeuModel;
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, TROFEU);
-        DrawVirtualObject("trofeu");
+        if(!lookAt_camera)
+        {
+            // Desenhamos o trofeu
+            model = trofeuModel;
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, TROFEU);
+            DrawVirtualObject("trofeu");
+        }
+        else
+        {
+            // Desenhamos o trofeu 1
+            model = Matrix_Translate(-0.75f, -3.5f, 1.5f);
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, TROFEU);
+            DrawVirtualObject("trofeu");
 
-        // Desenhamos o trofeu 2 (Gouraud Shading)
-        model = Matrix_Translate(0.5f, -3.55f, 1.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, TROFEU2);
-        DrawVirtualObject("trofeu");
+            // Desenhamos o trofeu 2 (Gouraud Shading)
+            model = Matrix_Translate(0.75f, -3.5f, 1.5f);
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, TROFEU2);
+            DrawVirtualObject("trofeu");
+
+            // Desenhamos o podio
+            model = Matrix_Translate(0.0f, 0.0f, 1.0f)
+                  * Matrix_Rotate_Y(M_PI);
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, PODIO1);
+            DrawVirtualObject("podio1");
+
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, PODIO2);
+            DrawVirtualObject("podio2");
+        }
 
         // Desenhamos os cones
         model = Matrix_Translate(c.x, c.y, c.z)
@@ -749,8 +823,6 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, CONE_B);
         DrawVirtualObject("cone_branco");
 
-        model = Matrix_Translate(c.x, c.y, c.z)
-              * Matrix_Scale(0.01f, 0.01f, 0.01f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, CONE_L);
         DrawVirtualObject("cone_laranja");
@@ -761,18 +833,9 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, CONE_B);
         DrawVirtualObject("cone_branco");
 
-        model = Matrix_Translate(b.x, b.y, b.z)
-              * Matrix_Scale(0.01f, 0.01f, 0.01f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, CONE_L);
         DrawVirtualObject("cone_laranja");
-
-        // Pegamos um vértice com coordenadas de modelo (0.5, 0.5, 0.5, 1) e o
-        // passamos por todos os sistemas de coordenadas armazenados nas
-        // matrizes the_model, the_view, e the_projection; e escrevemos na tela
-        // as matrizes e pontos resultantes dessas transformações.
-        //glm::vec4 p_model(0.5f, 0.5f, 0.5f, 1.0f);
-        //TextRendering_ShowModelViewProjection(window, projection, view, model, p_model);
 
         // Imprimimos na tela o tempo decorrido
         TextRendering_ShowTime(window);

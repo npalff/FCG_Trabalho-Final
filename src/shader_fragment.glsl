@@ -25,16 +25,18 @@ uniform mat4 view;
 uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
-#define SPHERE 0
-#define TREE   1
-#define PLANE  2
-#define TRUCK  3
-#define TIRE   4
-#define TIRE2  5
-#define TROFEU 6
+#define SPHERE  0
+#define TREE    1
+#define PLANE   2
+#define TRUCK   3
+#define TIRE    4
+#define TIRE2   5
+#define TROFEU  6
 #define TROFEU2 7
-#define CONE_B 8
-#define CONE_L 9
+#define CONE_B  8
+#define CONE_L  9
+#define PODIO1  10
+#define PODIO2  11
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -67,9 +69,9 @@ void main()
     // vértice.
     vec4 p = position_world;
 
-        // Normal do fragmento atual, interpolada pelo rasterizador a partir das
-        // normais de cada vértice.
-        vec4 n = normalize(normal);
+    // Normal do fragmento atual, interpolada pelo rasterizador a partir das
+    // normais de cada vértice.
+    vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
     vec4 l = normalize(vec4(1.0,1.0,0.0,0.0));
@@ -115,34 +117,8 @@ void main()
 
         U = (theta + M_PI) / (2*M_PI);
         V = (phi + M_PI_2) / M_PI;
-
+        Kd = texture(TextureImage0, vec2(U,V)).rgb;
     }
-//    else if ( object_id == BUNNY )
-//    {
-//        // PREENCHA AQUI as coordenadas de textura do coelho, computadas com
-//        // projeção planar XY em COORDENADAS DO MODELO. Utilize como referência
-//        // o slide 111 do documento "Aula_20_e_21_Mapeamento_de_Texturas.pdf",
-//        // e também use as variáveis min*/max* definidas abaixo para normalizar
-//        // as coordenadas de textura U e V dentro do intervalo [0,1]. Para
-//        // tanto, veja por exemplo o mapeamento da variável 'p_v' utilizando
-//        // 'h' no slide 154 do documento "Aula_20_e_21_Mapeamento_de_Texturas.pdf".
-//        // Veja também a Questão 4 do Questionário 4 no Moodle.
-//
-//        float minx = bbox_min.x;
-//        float maxx = bbox_max.x;
-//
-//        float miny = bbox_min.y;
-//        float maxy = bbox_max.y;
-//
-//        float minz = bbox_min.z;
-//        float maxz = bbox_max.z;
-//
-//        U = position_model.x;
-//        V = position_model.y;
-//
-//        U = (U - minx) / (maxx - minx);
-//        V = (V - miny) / (maxy - miny);
-//    }
     else if ( object_id == PLANE )
     {
         // Coordenadas de textura do plano, obtidas do arquivo OBJ.
@@ -188,6 +164,15 @@ void main()
         Kd = vec3(1.0, 0.333, 0.0);
         l = n + vec4(0.0, 1.0, 0.0, 0.0); // Alteração da direção da luz para ver melhor o cone
     }
+    else if ( object_id == PODIO1 )
+    {
+        Kd = vec3(1.0, 0.0, 0.0);
+    }
+    else if ( object_id == PODIO2 )
+    {
+        Kd = vec3(1.0, 1.0, 1.0);
+    }
+
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
