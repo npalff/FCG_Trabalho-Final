@@ -448,14 +448,6 @@ int main(int argc, char* argv[])
     {
         collision_BBox_Min.push_back(getBbox_min(&tiremodel, tireModels[i]));
         collision_BBox_Max.push_back(getBbox_max(&tiremodel, tireModels[i]));
-//        glm::vec3 bbox_min = g_VirtualScene["tire"].bbox_min;
-//        glm::vec3 bbox_max = g_VirtualScene["tire"].bbox_max;
-//        glm::vec4 bbox_min_H = glm::vec4(bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
-//        glm::vec4 bbox_max_H = glm::vec4(bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
-//        bbox_min_H = Matrix_Scale(0.8, 1.0, 0.8) * bbox_min_H;
-//        bbox_max_H = Matrix_Scale(0.8, 1.0, 0.8) * bbox_max_H;
-//        collision_BBox_Min.push_back(tireModels[i] * bbox_min_H);
-//        collision_BBox_Max.push_back(tireModels[i] * bbox_max_H);
     }
 
     glm::vec4 trofeu_bbox_min = getBbox_min(&trofeumodel, trofeuModel);
