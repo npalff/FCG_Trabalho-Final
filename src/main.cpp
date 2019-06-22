@@ -52,6 +52,8 @@
 #define MINIMUM_SPEED -2
 #define MAXIMUM_SPEED 3.5
 
+#define ESCALA_PLANO 10 // valor usado para escalar o plano (chão) e verificar intersecção com os planos das bordas da pista
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -576,7 +578,7 @@ int main(int argc, char* argv[])
         }
 
 
-        // TESTE DE COLISÃO SE ATUALIZAR POSIÇÃO DA CÂMERA/CARRO
+        // TESTES DE COLISÃO SE ATUALIZAR POSIÇÃO DA CÂMERA/CARRO
         glm::mat4 model = Matrix_Translate(cameraX+deltaCameraX, cameraY+deltaCameraY, cameraZ+deltaCameraZ)
                         * Matrix_Rotate_Y(g_CameraTheta-CAMERA_THETA_INICIAL+delta_g_CameraTheta)
                         * Matrix_Rotate_Y(M_PI)
@@ -596,14 +598,11 @@ int main(int argc, char* argv[])
             i++;
         }
 
-        // Se o jogador terminou a corrida e "entrar" no troféu, mudamos para a câmera look at
-        // Teste !lookAt_camera para não reatualizar posição da câmera mais de uma vez
-        if(!lookAt_camera && finished && bbInterseccao(truck_bbox_min, truck_bbox_max, trofeu_bbox_min, trofeu_bbox_max))
+        // TESTE DE COLISÃO COM AS BORDAS DA PISTA
+        if(between(ESCALA_PLANO, truck_bbox_max.x, truck_bbox_min.x) || between(-ESCALA_PLANO, truck_bbox_max.x, truck_bbox_min.x) ||
+           between(ESCALA_PLANO, truck_bbox_max.z, truck_bbox_min.z) || between(-ESCALA_PLANO, truck_bbox_max.z, truck_bbox_min.z))
         {
-            lookAt_camera = true;
-            g_CameraTheta = 0.5f; // Atualizacao da posicao da camera
-            g_CameraPhi = 0.5f;
-            g_CameraDistance = 4.0f;
+            collision = true;
         }
 
         // TESTE DE COLISÃO COM OS OBSTÁCULOS
@@ -633,6 +632,16 @@ int main(int argc, char* argv[])
         else
         {
             speed = 0;
+        }
+
+        // Se o jogador terminou a corrida e "entrar" no troféu, mudamos para a câmera look at
+        // Teste !lookAt_camera para não reatualizar posição da câmera mais de uma vez
+        if(!lookAt_camera && finished && bbInterseccao(truck_bbox_min, truck_bbox_max, trofeu_bbox_min, trofeu_bbox_max))
+        {
+            lookAt_camera = true;
+            g_CameraTheta = 0.5f; // Atualizacao da posicao da camera
+            g_CameraPhi = 0.5f;
+            g_CameraDistance = 4.0f;
         }
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
@@ -787,7 +796,7 @@ int main(int argc, char* argv[])
         }
 
         // Desenhamos o plano do chão
-        model = Matrix_Scale(10.0f,1.0f,10.0f);
+        model = Matrix_Scale(ESCALA_PLANO,1.0f,ESCALA_PLANO);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
