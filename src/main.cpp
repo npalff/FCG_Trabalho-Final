@@ -54,6 +54,11 @@
 
 #define ESCALA_PLANO 10 // valor usado para escalar o plano (chão) e verificar intersecção com os planos das bordas da pista
 
+//AUDIO
+#include <iostream>
+#include <irrKlang/irrKlang.h>
+using namespace irrklang;
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -221,6 +226,21 @@ bool finished = false;    // Indica se o carro cruzou a linha de chegada (parar 
 
 int main(int argc, char* argv[])
 {
+
+    //AUDIO
+     // start the sound engine with default parameters
+    ISoundEngine* engine = createIrrKlangDevice();
+    if (!engine)
+    {
+        printf("ERRO NO AUDIO");
+        return 0;
+    }
+
+    bool AudioOn = false;
+    // play some sound stream
+     engine->play2D("../../data/soundtrack.mp3");
+
+
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
     // sistema operacional, onde poderemos renderizar com OpenGL.
     int success = glfwInit();
@@ -454,6 +474,12 @@ int main(int argc, char* argv[])
     {
         // Aqui executamos as operações de renderização
 
+        if (finished && !AudioOn)
+        {
+            AudioOn = true;
+            engine-> removeSoundSource("../../data/soundtrack.mp3");
+            engine->play2D("../../data/finished.mp3");
+        }
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
         // definida como coeficientes RGBA: Red, Green, Blue, Alpha; isto é:
         // Vermelho, Verde, Azul, Alpha (valor de transparência).
@@ -880,6 +906,7 @@ int main(int argc, char* argv[])
     glfwTerminate();
 
     // Fim do programa
+     engine->drop(); // delete engine AUDIO
     return 0;
 }
 
