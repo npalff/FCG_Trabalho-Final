@@ -76,7 +76,7 @@ void main()
     if ( object_id == TROFEU2 )
     {
         // Vetor que define o sentido da fonte de luz em relação ao vértice atual.
-        vec4 l = normalize(vec4(1.0,1.0,0.0,0.0));
+        vec4 l = normalize(vec4(1.0,1.0,1.0,0.0));
 
         // Normal do vértice atual
         vec4 n = normalize(normal);
