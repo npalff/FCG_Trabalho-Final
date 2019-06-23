@@ -230,16 +230,9 @@ int main(int argc, char* argv[])
     //AUDIO
      // start the sound engine with default parameters
     ISoundEngine* engine = createIrrKlangDevice();
-    if (!engine)
-    {
-        printf("ERRO NO AUDIO");
-        return 0;
-    }
 
     bool AudioOn = false;
     // play some sound stream
-     engine->play2D("../../data/soundtrack.mp3");
-
 
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
     // sistema operacional, onde poderemos renderizar com OpenGL.
@@ -477,8 +470,7 @@ int main(int argc, char* argv[])
         if (finished && !AudioOn)
         {
             AudioOn = true;
-            engine-> removeSoundSource("../../data/soundtrack.mp3");
-            engine->play2D("../../data/finished.mp3");
+            engine->play2D("../../data/finished.mp3",1);
         }
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
         // definida como coeficientes RGBA: Red, Green, Blue, Alpha; isto é:
@@ -1729,7 +1721,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     //   Se apertar tecla Z       então g_AngleZ += delta;
     //   Se apertar tecla shift+Z então g_AngleZ -= delta;
 
-    float delta = 3.141592 / 16; // 22.5 graus, em radianos.
+//    float delta = 3.141592 / 16; // 22.5 graus, em radianos.
 
     // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
