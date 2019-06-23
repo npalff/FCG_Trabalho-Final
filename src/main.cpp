@@ -163,10 +163,6 @@ std::stack<glm::mat4>  g_MatrixStack;
 // Razão de proporção da janela (largura/altura). Veja função FramebufferSizeCallback().
 float g_ScreenRatio = 1.0f;
 
-// Ângulos de Euler que controlam a rotação de um dos cubos da cena virtual
-float g_AngleX = 0.0f;
-float g_AngleY = 0.0f;
-float g_AngleZ = 0.0f;
 
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
 // pressionado no momento atual. Veja função MouseButtonCallback().
@@ -195,13 +191,6 @@ bool pressedD = false;
 // Variável que controla o tipo de câmera
 bool lookAt_camera = false;
 
-// Variáveis que controlam rotação do antebraço
-float g_ForearmAngleZ = 0.0f;
-float g_ForearmAngleX = 0.0f;
-
-// Variáveis que controlam translação do torso
-float g_TorsoPositionX = 0.0f;
-float g_TorsoPositionY = 0.0f;
 
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
@@ -259,7 +248,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - Trabalho Final", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "N2 Racing", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -717,7 +706,6 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        #define SPHERE  0
         #define TREE    1
         #define PLANE   2
         #define TRUCK   3
@@ -1629,10 +1617,6 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         float dx = xpos - g_LastCursorPosX;
         float dy = ypos - g_LastCursorPosY;
 
-        // Atualizamos parâmetros da antebraço com os deslocamentos
-        g_ForearmAngleZ -= 0.01f*dx;
-        g_ForearmAngleX += 0.01f*dy;
-
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
         g_LastCursorPosX = xpos;
@@ -1644,10 +1628,6 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
         float dx = xpos - g_LastCursorPosX;
         float dy = ypos - g_LastCursorPosY;
-
-        // Atualizamos parâmetros da antebraço com os deslocamentos
-        g_TorsoPositionX += 0.01f*dx;
-        g_TorsoPositionY -= 0.01f*dy;
 
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
@@ -1723,32 +1703,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     //   Se apertar tecla shift+Z então g_AngleZ -= delta;
 
     float delta = 3.141592 / 16; // 22.5 graus, em radianos.
-
-    if (key == GLFW_KEY_X && action == GLFW_PRESS)
-    {
-        g_AngleX += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-
-    if (key == GLFW_KEY_Y && action == GLFW_PRESS)
-    {
-        g_AngleY += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-    if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-    {
-        g_AngleZ += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-
-    // Se o usuário apertar a tecla espaço, resetamos os ângulos de Euler para zero.
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-    {
-        g_AngleX = 0.0f;
-        g_AngleY = 0.0f;
-        g_AngleZ = 0.0f;
-        g_ForearmAngleX = 0.0f;
-        g_ForearmAngleZ = 0.0f;
-        g_TorsoPositionX = 0.0f;
-        g_TorsoPositionY = 0.0f;
-    }
 
     // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
@@ -1878,21 +1832,6 @@ void TextRendering_ShowModelViewProjection(
 
     TextRendering_PrintString(window, " Viewport matrix           NDC      In Pixel Coords.", -1.0f, 1.0f-25*pad, 1.0f);
     TextRendering_PrintMatrixVectorProductMoreDigits(window, viewport_mapping, p_ndc, -1.0f, 1.0f-26*pad, 1.0f);
-}
-
-// Escrevemos na tela os ângulos de Euler definidos nas variáveis globais
-// g_AngleX, g_AngleY, e g_AngleZ.
-void TextRendering_ShowEulerAngles(GLFWwindow* window)
-{
-    if ( !g_ShowInfoText )
-        return;
-
-    float pad = TextRendering_LineHeight(window);
-
-    char buffer[80];
-    snprintf(buffer, 80, "Euler Angles rotation matrix = Z(%.2f)*Y(%.2f)*X(%.2f)\n", g_AngleZ, g_AngleY, g_AngleX);
-
-    TextRendering_PrintString(window, buffer, -1.0f+pad/10, -1.0f+2*pad/10, 1.0f);
 }
 
 // Escrevemos na tela qual matriz de projeção está sendo utilizada.
