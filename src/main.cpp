@@ -174,7 +174,7 @@ bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mouse
 // usuário através do mouse (veja função CursorPosCallback()). A posição
 // efetiva da câmera é calculada dentro da função main(), dentro do loop de
 // renderização.
-#define CAMERA_THETA_INICIAL 1.59f
+#define CAMERA_THETA_INICIAL 1.57f
 float g_CameraTheta = CAMERA_THETA_INICIAL; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 0.0f;   // Ângulo em relação ao eixo Y
 float g_CameraDistance = 3.5f; // Distância da câmera para a origem
@@ -182,7 +182,7 @@ float g_CameraDistance = 3.5f; // Distância da câmera para a origem
 //Variáveis para controlar o centro da free câmera
 float cameraX = 1.0f;
 float cameraY = 0.0f;
-float cameraZ = 3.5f;
+float cameraZ = 3.385f;
 bool pressedW = false;
 bool pressedS = false;
 bool pressedA = false;
