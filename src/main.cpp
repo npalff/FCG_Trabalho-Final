@@ -228,11 +228,11 @@ int main(int argc, char* argv[])
 {
 
     //AUDIO
-     // start the sound engine with default parameters
+    // start the sound engine with default parameters
     ISoundEngine* engine = createIrrKlangDevice();
-
+    engine->play2D("../../data/finished.mp3", 1);
+    engine->setAllSoundsPaused(true); // Pausamos a música para toca-la depois, sem travar a execução
     bool AudioOn = false;
-    // play some sound stream
 
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
     // sistema operacional, onde poderemos renderizar com OpenGL.
@@ -467,11 +467,6 @@ int main(int argc, char* argv[])
     {
         // Aqui executamos as operações de renderização
 
-        if (finished && !AudioOn)
-        {
-            AudioOn = true;
-            engine->play2D("../../data/finished.mp3",1);
-        }
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
         // definida como coeficientes RGBA: Red, Green, Blue, Alpha; isto é:
         // Vermelho, Verde, Azul, Alpha (valor de transparência).
@@ -799,6 +794,13 @@ int main(int argc, char* argv[])
             {
                 finished = true;
             }
+        }
+
+        // Se cruzou a linha de chegada, tocamos a música
+        if (finished && !AudioOn)
+        {
+            AudioOn = true;
+            engine->setAllSoundsPaused(false);
         }
 
         // Desenhamos o plano do chão
@@ -1623,30 +1625,6 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 
         if (g_CameraPhi < phimin)
             g_CameraPhi = phimin;
-
-        // Atualizamos as variáveis globais para armazenar a posição atual do
-        // cursor como sendo a última posição conhecida do cursor.
-        g_LastCursorPosX = xpos;
-        g_LastCursorPosY = ypos;
-    }
-
-    if (g_RightMouseButtonPressed)
-    {
-        // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
-        float dx = xpos - g_LastCursorPosX;
-        float dy = ypos - g_LastCursorPosY;
-
-        // Atualizamos as variáveis globais para armazenar a posição atual do
-        // cursor como sendo a última posição conhecida do cursor.
-        g_LastCursorPosX = xpos;
-        g_LastCursorPosY = ypos;
-    }
-
-    if (g_MiddleMouseButtonPressed)
-    {
-        // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
-        float dx = xpos - g_LastCursorPosX;
-        float dy = ypos - g_LastCursorPosY;
 
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
